@@ -122,17 +122,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.platform }}
-      - name: Upload to LiquidBounce API
+      - name: Upload to Visuality backend
         env:
           API_TOKEN: ${{ secrets.API_TOKEN }}
+          MCEF_UPLOAD_BASE_URL: ${{ vars.MCEF_UPLOAD_BASE_URL != '' && vars.MCEF_UPLOAD_BASE_URL || 'https://visuality.colimity.com/api/v3/resource' }}
         run: |
           PLATFORM="${{ matrix.platform }}"
+          UPLOAD_URL="${MCEF_UPLOAD_BASE_URL}/mcef-cef/${{ github.sha }}/${PLATFORM}"
           
           response=$(curl -w "\n%{http_code}" -X POST \
             -H "Authorization: Bearer $API_TOKEN" \
             -H "Content-Type: application/gzip" \
             --data-binary "@${PLATFORM}.tar.gz" \
-            "http://nossl.api.liquidbounce.net/api/v3/resource/mcef-cef/${{ github.sha }}/${PLATFORM}")
+            "$UPLOAD_URL")
           
           status_code=$(echo "$response" | tail -n1)
           response_body=$(echo "$response" | sed '$d')
